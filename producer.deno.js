@@ -1,31 +1,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-// تم تحديث الرابط إلى نسخة 0.21.0
-import { connect } from "https://deno.land/x/amqp@v0.21.0/mod.ts"; 
-
-// Note: Deno uses the native Fetch API, so we don't need Axios.
+import { connect } from "https://deno.land/x/amqp@v0.27.0/mod.ts";
 
 // Environment variables/constants
 const RABBIT_URL = Deno.env.get("RABBIT_URL" );
 const QUEUE_NAME = Deno.env.get("QUEUE_NAME");
 const API_URL = Deno.env.get("API_URL");
-
-let channel;
-
-// Function to connect to RabbitMQ
-async function connectRabbitMQ() {
-    try {
-        console.log("Attempting to connect to RabbitMQ...");
-        const connection = await connect(RABBIT_URL);
-        channel = await connection.openChannel();
-        await channel.declareQueue({ queue: QUEUE_NAME, durable: true });
-        console.log('Connected to RabbitMQ and asserted queue:', QUEUE_NAME);
-        return true;
-    } catch (error) {
-        console.error('Error connecting to RabbitMQ:', error.message);
-        // In Deno Deploy, we let the runtime handle retries or restarts
-        return false;
-    }
-}
 
 // Function to fetch currency rates from an external API
 async function fetchRates() {
@@ -46,16 +25,27 @@ async function fetchRates() {
     }
 }
 
-// Function to send rates to RabbitMQ
+// Function to connect, send rates to RabbitMQ, and close the connection
 async function sendRatesToRabbitMQ(rates) {
-    if (!channel) {
-        console.error('RabbitMQ channel not available. Reconnecting...');
-        if (!(await connectRabbitMQ())) return false;
+    if (!RABBIT_URL || !QUEUE_NAME) {
+        console.error("Environment variables RABBIT_URL or QUEUE_NAME are not set.");
+        return false;
     }
 
+    let connection;
     try {
+        console.log("Attempting to connect to RabbitMQ...");
+        
+        // 1. Establish a short-lived connection
+        connection = await connect(RABBIT_URL);
+        const channel = await connection.openChannel();
+        
+        // Ensure the queue exists
+        await channel.declareQueue({ queue: QUEUE_NAME, durable: true });
+
+        // Publish the message
         const msg = JSON.stringify(rates);
-        const sent = await channel.publish(
+        await channel.publish(
             { routingKey: QUEUE_NAME },
             new TextEncoder().encode(msg),
             { deliveryMode: 2 } // persistent
@@ -66,6 +56,12 @@ async function sendRatesToRabbitMQ(rates) {
     } catch (error) {
         console.error('Error sending message to RabbitMQ:', error.message);
         return false;
+    } finally {
+        // 2. IMPORTANT: Close the connection after use
+        if (connection) {
+            console.log("Closing RabbitMQ connection.");
+            await connection.close();
+        }
     }
 }
 
@@ -80,14 +76,11 @@ async function handler(req) {
         return new Response("Environment variables not set.", { status: 500 });
     }
 
-    if (!channel) {
-        await connectRabbitMQ();
-    }
-
     const rates = await fetchRates();
 
     if (rates) {
-        const success = await sendRatesToRabbitMQ(rates);
+        // The sendRatesToRabbitMQ function now handles connection and closing in a short-lived manner
+        const success = await sendRatesToRabbitMQ(rates); 
         if (success) {
             return Response.json({ success: true, message: 'Rates sent to MOM queue successfully.', rates: rates });
         } else {
