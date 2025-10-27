@@ -1,4 +1,4 @@
-import { connect } from "https://deno.land/x/amqp@v0.27.0/mod.ts";
+import { connect } from "https://deno.land/x/amqp@v0.26.0/mod.ts";
 
 // Environment variables/constants
 const RABBIT_URL = Deno.env.get("RABBIT_URL" );
