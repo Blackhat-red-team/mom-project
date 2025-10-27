@@ -1,10 +1,10 @@
 const amqp = require('amqplib');
-const fs = require('fs');
+
 
 // Environment variables/constants
-const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
-const QUEUE_NAME = 'currency_rates';
-const LOG_FILE = 'processed_rates.log';
+const RABBITMQ_URL = process.env.RABBIT_URL;
+const QUEUE_NAME = process.env.QUEUE_NAME;
+
 
 async function receiveRatesFromRabbitMQ() {
     try {
@@ -22,10 +22,10 @@ async function receiveRatesFromRabbitMQ() {
                 // 1. Process the message (The Core MOM Functionality)
                 console.log(`[x] Received rates at ${timestamp}`);
                 
-                // 2. Log the processed data to a file (Simulating a database write or further processing)
-                const logEntry = `[${timestamp}] Successfully processed new rates. Base: ${rates.USD ? 'USD' : 'N/A'}, SAR Rate: ${rates.SAR || 'N/A'}\n`;
-                fs.appendFileSync(LOG_FILE, logEntry);
-                console.log(`[x] Logged processing details to ${LOG_FILE}`);
+                // 2. Log the processed data to the console (Deno Deploy is often stateless)
+                const logEntry = `[${timestamp}] Successfully processed new rates. Base: ${rates.USD ? 'USD' : 'N/A'}, SAR Rate: ${rates.SAR || 'N/A'}`;
+                console.log(logEntry);
+                
 
                 // Acknowledge the message to remove it from the queue
                 channel.ack(msg);
