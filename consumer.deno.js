@@ -1,7 +1,8 @@
-import { connect } from "https://deno.land/x/amqp@v0.27.0/mod.ts";
+// تم تحديث الرابط إلى نسخة 0.21.0
+import { connect } from "https://deno.land/x/amqp@v0.21.0/mod.ts";
 
 // Environment variables/constants
-const RABBIT_URL = Deno.env.get("RABBIT_URL");
+const RABBIT_URL = Deno.env.get("RABBIT_URL" );
 const QUEUE_NAME = Deno.env.get("QUEUE_NAME");
 
 async function receiveRatesFromRabbitMQ() {
@@ -52,4 +53,3 @@ async function receiveRatesFromRabbitMQ() {
 
 // Start the consumer
 receiveRatesFromRabbitMQ();
-
