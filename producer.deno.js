@@ -1,10 +1,11 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { connect } from "https://deno.land/x/amqp@v0.27.0/mod.ts";
+// تم تحديث الرابط إلى نسخة 0.21.0
+import { connect } from "https://deno.land/x/amqp@v0.21.0/mod.ts"; 
 
 // Note: Deno uses the native Fetch API, so we don't need Axios.
 
 // Environment variables/constants
-const RABBIT_URL = Deno.env.get("RABBIT_URL");
+const RABBIT_URL = Deno.env.get("RABBIT_URL" );
 const QUEUE_NAME = Deno.env.get("QUEUE_NAME");
 const API_URL = Deno.env.get("API_URL");
 
@@ -100,4 +101,3 @@ async function handler(req) {
 // Start the server
 console.log("Producer server starting...");
 serve(handler);
-
