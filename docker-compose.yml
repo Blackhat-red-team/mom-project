@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # 1. RabbitMQ Service (The MOM)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672" # AMQP protocol port
+      - "15672:15672" # Management UI port (optional, but useful)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # 2. Producer Service (The Web Application)
+  producer:
+    build: .
+    container_name: producer
+    # The producer needs to be able to talk to the web and RabbitMQ
+    ports:
+      - "3000:3000" # Web interface port
+    environment:
+      # Connect to the RabbitMQ service using its service name
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - rabbitmq # Ensure RabbitMQ starts before the producer
+    volumes:
+      - .:/usr/src/app
+    command: npm run start-producer
+
+  # 3. Consumer Service (The Background Worker)
+  consumer:
+    build: .
+    container_name: consumer
+    environment:
+      # Connect to the RabbitMQ service using its service name
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - rabbitmq # Ensure RabbitMQ starts before the consumer
+    volumes:
+      # Mount the volume to access the log file on the host machine
+      - .:/usr/src/app
+    # Override the default command to run the consumer script
+    command: npm run start-consumer
+    # This service should restart if it fails, as it's a critical background process
+    restart: on-failure
+
+volumes:
+  rabbitmq_data:
