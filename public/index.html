@@ -92,31 +92,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>تطبيق تحويل العملات باستخدام MOM</h1>
+        <h1> تحويل العملات باستخدام MOM</h1>
 
-        <div class="mom-section">
-            <p><strong>هذا الجزء هو "المنتِج" (Producer):</strong></p>
-            <p>عند الضغط على الزر، سيقوم النظام بجلب أحدث أسعار العملات من خدمة خارجية، ثم يرسلها كـ <strong>رسالة غير متزامنة (Asynchronous Message)</strong> إلى نظام المراسلة (RabbitMQ).</p>
-            <p>هذا يضمن أن عملية جلب البيانات الطويلة لا تعيق واجهة المستخدم، وأن "المستهلك" (Consumer) سيعالجها في الخلفية.</p>
-        </div>
 
-        <button id="fetch-button">1. جلب الأسعار وإرسالها إلى MOM (RabbitMQ)</button>
 
-        <div id="status-message" class="success"></div>
+        <button id="fetch-button"> جلب الأسعار  </button>
 
-        <div class="result-box" id="result-box" style="display: none;">
-            <h2>2. النتيجة الفورية (من المنتج)</h2>
-            <p>تم إرسال البيانات إلى قائمة الانتظار بنجاح. الأسعار التي تم إرسالها هي:</p>
-            <div id="rates-display"></div>
-        </div>
-        
-        <div class="result-box" style="margin-top: 20px;">
-            <h2>3. عملية المستهلك (Consumer)</h2>
-            <p>
-                في الخلفية، يقوم "المستهلك" (Consumer) باستقبال هذه الرسالة ومعالجتها (تسجيلها في ملف سجل `processed_rates.log`).
-                <br>
-            </p>
-        </div>
+   
 
     </div>
     <script src="app.js"></script>
