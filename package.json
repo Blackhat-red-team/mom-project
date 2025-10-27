@@ -4,8 +4,7 @@
   "description": "A currency exchange application demonstrating Message-Oriented Middleware (MOM) using RabbitMQ.",
   "main": "producer.js",
   "scripts": {
-    "start": "node producer.js",
-    
+    "start": "node producer.js"
   },
   "dependencies": {
     "amqplib": "^0.10.3",
