@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { connect } from "https://deno.land/x/amqp@v0.24.0/mod.ts";
+import * as amqplib from "npm:amqplib";
 
 // Environment variables/constants
 const RABBIT_URL = Deno.env.get("RABBIT_URL" );
@@ -37,18 +37,18 @@ async function sendRatesToRabbitMQ(rates) {
         console.log("Attempting to connect to RabbitMQ...");
         
         // 1. Establish a short-lived connection
-        connection = await connect(RABBIT_URL);
-        const channel = await connection.openChannel();
+        connection = await amqplib.connect(RABBIT_URL);
+        const channel = await connection.createChannel();
         
         // Ensure the queue exists
-        await channel.declareQueue({ queue: QUEUE_NAME, durable: true });
+        await channel.assertQueue(QUEUE_NAME, { durable: true });
 
         // Publish the message
         const msg = JSON.stringify(rates);
-        await channel.publish(
-            { routingKey: QUEUE_NAME },
+        channel.sendToQueue(
+            QUEUE_NAME,
             new TextEncoder().encode(msg),
-            { deliveryMode: 2 } // persistent
+            { persistent: true }
         );
 
         console.log(`[x] Sent rates to queue: ${QUEUE_NAME}`);

@@ -1,4 +1,4 @@
-import { connect } from "https://deno.land/x/amqp@v0.24.0/mod.ts";
+import * as amqplib from "npm:amqplib";
 
 // Environment variables/constants
 const RABBIT_URL = Deno.env.get("RABBIT_URL" );
@@ -19,14 +19,14 @@ async function processSingleMessage() {
         console.log("Attempting to connect to RabbitMQ for a single message...");
         
         // 1. Establish a short-lived connection
-        connection = await connect(RABBIT_URL);
-        const channel = await connection.openChannel();
+        connection = await amqplib.connect(RABBIT_URL);
+        const channel = await connection.createChannel();
         
         // Ensure the queue exists
-        await channel.declareQueue({ queue: QUEUE_NAME, durable: true });
+        await channel.assertQueue(QUEUE_NAME, { durable: true });
 
         // 2. Get a single message instead of consuming continuously
-        const message = await channel.get({ queue: QUEUE_NAME });
+        const message = await channel.get(QUEUE_NAME, { noAck: false });
 
         if (message) {
             if (message.content) {
@@ -41,7 +41,7 @@ async function processSingleMessage() {
                 console.log(logEntry);
                 
                 // Acknowledge the message
-                await channel.ack({ deliveryTag: message.deliveryTag });
+                await channel.ack(message);
             }
         } else {
             console.log(`No messages in queue: ${QUEUE_NAME}.`);
